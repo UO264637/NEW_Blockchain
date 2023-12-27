@@ -13,6 +13,7 @@ function App() {
   const [balance, setBalance] = useState();
   const [balanceWei, setBalanceWei] = useState();
   const [walletBalance, setWalletBalance] = useState();
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     initContracts();
@@ -25,6 +26,7 @@ function App() {
       setTikets(tiketsFromBlockchain)
 
     updateBalances();
+    updateBookings();
   }
 
   let updateBalances = async () => {
@@ -51,6 +53,16 @@ function App() {
     setWalletBalance(ethers.utils.formatEther(wb));
   }
 
+  let updateBookings = async () => {
+    let updatedBookings = [];
+
+    for (let i = 0; i < 16; i++) {
+      let isBooked = await myContract.current?.isBooked(i);
+      updatedBookings[i] = isBooked;
+    }
+    setBookings(updatedBookings);
+  }
+
   let configureBlockchain = async () => {
     try {
       let provider = await detectEthereumProvider();
@@ -75,7 +87,6 @@ function App() {
   let clickBuyTiket = async (e, i) => {
     e.preventDefault();
     const inputValue = e.target.elements[0].value;
-    console.log(inputValue);
 
     if (walletBalance > inputValue) {
       const tx = await myContract.current.buyTiket(i, {
@@ -150,6 +161,17 @@ function App() {
     }
   }
 
+  let bookTiket = async (i) => {
+      const tx = await myContract.current.bookTicket(i).then(
+        async (result) => { alert("Booked Ticket");
+        const newBookings = [...bookings];
+        newBookings[i] = true;
+        setBookings(newBookings);
+      },
+        (error) => { alert(decodeError(error).error) }
+      );
+  }
+
 
   return (
     <div>
@@ -185,6 +207,8 @@ function App() {
                 />
                 <label> BNB</label>
                 <button type="submit" style={{ marginLeft: '10px' }}> Buy </button>
+                {bookings[i] ? '' : (<a href="#" onClick={() => bookTiket(i)}>Book Ticket</a>)}
+                
               </form>
             )}
           </li>
