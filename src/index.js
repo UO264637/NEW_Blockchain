@@ -96,14 +96,14 @@ function App() {
       })
 
       try {
-        await tx.wait()
+        await tx.wait();
         const tiketsUpdated = await myContract.current.getTikets();
         setTikets(tiketsUpdated);
         updateBalances();
         updateWallet();
       } catch (error) {
-        const errorDecoded = decodeError(error);
-        alert('Revert reason: ' + errorDecoded.error);
+        console.log(error.reason)
+        alert('This ticket is booked or belongs to someone else');
       }
     }
     else {
@@ -114,7 +114,7 @@ function App() {
   let withdrawBalance = async () => {
     const tx = await myContract.current.transferBalanceToAdmin().then(
       (result) => { },
-      (error) => { alert(decodeError(error).error) }
+      (error) => { alert(error.reason) }
     );
     try {
       await tx.wait();
@@ -133,7 +133,7 @@ function App() {
     if (utils.isAddress(inputValue)) {
       await myContract.current.setAdmin(inputValue).then(
         (result) => { alert("Admin updated") },
-        (error) => { alert(decodeError(error).error) }
+        (error) => { alert(error.reason) }
       );
     }
     else {
@@ -162,14 +162,16 @@ function App() {
   }
 
   let bookTiket = async (i) => {
-      const tx = await myContract.current.bookTicket(i).then(
-        async (result) => { alert("Booked Ticket");
-        const newBookings = [...bookings];
-        newBookings[i] = true;
-        setBookings(newBookings);
-      },
-        (error) => { alert(decodeError(error).error) }
-      );
+      const tx = await myContract.current.bookTicket(i);
+
+      try {
+        await tx.wait();
+        alert("Ticket Booked")
+        updateBookings();
+      } catch (error) {
+        const errorDecoded = decodeError(error);
+        alert('Revert reason: ' + errorDecoded.error);
+      }
   }
 
 
